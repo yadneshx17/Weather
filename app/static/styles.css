@@ -1,0 +1,32 @@
+:root { color-scheme: light dark; }
+body { font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; margin: 0; padding: 24px; background: #ffffff; color: #111827; }
+body.dark { background: #0b1220; color: #e5e7eb; }
+.container { max-width: 720px; margin: 0 auto; }
+h1 { margin: 0 0 16px; font-size: 24px; }
+form { display: flex; gap: 8px; margin-bottom: 16px; }
+input[type="text"] { flex: 1; padding: 10px 12px; border-radius: 8px; border: 1px solid #d1d5db; background: #ffffff; color: inherit; }
+body.dark input[type="text"] { border-color: #334155; background: #0f172a; color: #e5e7eb; }
+button { padding: 10px 14px; border-radius: 8px; border: 0; background: #2563eb; color: white; font-weight: 600; cursor: pointer; }
+button:disabled { opacity: .6; cursor: not-allowed; }
+.card { border: 1px solid #e5e7eb; border-radius: 12px; padding: 16px; background: transparent; }
+body.dark .card { border-color: #1f2937; }
+.row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.label { color: #6b7280; font-size: 12px; text-transform: uppercase; letter-spacing: .04em; }
+body.dark .label { color: #9ca3af; }
+.value { font-size: 18px; font-weight: 600; }
+.error { color: #b91c1c; margin-top: 8px; }
+.subtle { color: #6b7280; font-size: 12px; }
+body.dark .subtle { color: #9ca3af; }
+.chip { display: inline-block; padding: 2px 8px; border-radius: 12px; font-size: 12px; font-weight: 600; }
+.chip.low { background: #fee2e2; color: #991b1b; }
+.chip.normal { background: #d1fae5; color: #065f46; }
+.chip.high { background: #e0e7ff; color: #3730a3; }
+.toolbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+.ghost { background: transparent; color: inherit; border: 1px solid #e5e7eb; }
+body.dark .ghost { border-color: #334155; }
+.recents { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
+.recent-chip { padding: 6px 10px; border-radius: 999px; border: 1px solid #e5e7eb; cursor: pointer; background: transparent; }
+body.dark .recent-chip { border-color: #334155; color: #e5e7eb; }
+
+
+

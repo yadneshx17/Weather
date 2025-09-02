@@ -1,0 +1,121 @@
+const RECENTS_KEY = 'weather_recents_v1';
+const THEME_KEY = 'theme_preference';
+
+const $ = (id) => document.getElementById(id);
+const els = {
+  country: $('country'), name: $('name'), temp: $('temp'),
+  pressure: $('pressure'), sea_level: $('sea_level'), ground_level: $('ground_level'),
+  wind_speed: $('wind_speed'), wind_gust: $('wind_gust'), wind_dir: $('wind_dir'),
+  clouds: $('clouds'), humidity: $('humidity'),
+  error: $('error'), city: $('city'), submit: $('submit'), recents: $('recents')
+};
+
+function setTheme(theme) {
+  document.body.classList.toggle('dark', theme === 'dark');
+  localStorage.setItem(THEME_KEY, theme);
+}
+function initTheme() {
+  const saved = localStorage.getItem(THEME_KEY);
+  if (saved === 'dark' || saved === 'light') return setTheme(saved);
+  const prefersDark = window.matchMedia?.('(prefers-color-scheme: dark)');
+  setTheme(prefersDark && prefersDark.matches ? 'dark' : 'light');
+}
+function toggleTheme() { setTheme(document.body.classList.contains('dark') ? 'light' : 'dark'); }
+
+function degreeToCardinal(deg) {
+  if (typeof deg !== 'number' || isNaN(deg)) return '-';
+  const dirs = ['N','NNE','NE','ENE','E','ESE','SE','SSE','S','SSW','SW','WSW','W','WNW','NW','NNW'];
+  return dirs[Math.round(((deg % 360) / 22.5)) % 16];
+}
+
+function hpaToMmHg(hPa) { return Math.round(Number(hPa) * 0.750062); }
+function pressureBadge(hPa) {
+  let level = 'normal';
+  if (hPa < 1005) level = 'low'; else if (hPa > 1025) level = 'high';
+  return `<span class="chip ${level}">${level}</span>`;
+}
+
+function setText(el, value) { el.textContent = value ?? '-'; }
+function setHTML(el, value) { el.innerHTML = value ?? '-'; }
+
+function renderRecents() {
+  if (!els.recents) return;
+  els.recents.innerHTML = '';
+  const list = loadRecents();
+  list.forEach(city => {
+    const btn = document.createElement('button');
+    btn.className = 'recent-chip'; btn.type = 'button'; btn.textContent = city;
+    btn.addEventListener('click', () => { els.city.value = city; $('form').dispatchEvent(new Event('submit')); });
+    els.recents.appendChild(btn);
+  });
+}
+function loadRecents() { try { return JSON.parse(localStorage.getItem(RECENTS_KEY)) || []; } catch { return []; } }
+function saveRecent(city) {
+  const list = loadRecents();
+  const i = list.findIndex(c => c.toLowerCase() === city.toLowerCase());
+  if (i !== -1) list.splice(i, 1);
+  list.unshift(city);
+  if (list.length > 6) list.pop();
+  localStorage.setItem(RECENTS_KEY, JSON.stringify(list));
+  renderRecents();
+}
+
+function updateUI(data, fallbackCity) {
+  setText(els.country, data?.sys?.country);
+  setText(els.name, data?.name ?? fallbackCity);
+  setText(els.temp, data?.main?.temp != null ? `${data.main.temp} °C` : '-');
+
+  if (data?.main?.pressure != null) {
+    const h = Number(data.main.pressure); const m = hpaToMmHg(h);
+    setHTML(els.pressure, `${h} hPa <span class="subtle">(${m} mmHg)</span> ${pressureBadge(h)}`);
+  } else setText(els.pressure, '-');
+
+  if (data?.main?.sea_level != null) {
+    const h = Number(data.main.sea_level); setHTML(els.sea_level, `${h} hPa <span class="subtle">(${hpaToMmHg(h)} mmHg)</span>`);
+  } else setText(els.sea_level, '-');
+
+  if (data?.main?.grnd_level != null) {
+    const h = Number(data.main.grnd_level); setHTML(els.ground_level, `${h} hPa <span class="subtle">(${hpaToMmHg(h)} mmHg)</span>`);
+  } else setText(els.ground_level, '-');
+
+  if (data?.wind?.speed != null) {
+    const ms = Number(data.wind.speed); setText(els.wind_speed, `${ms} m/s (${Math.round(ms * 3.6)} km/h)`);
+  } else setText(els.wind_speed, '-');
+
+  if (data?.wind?.gust != null) {
+    const ms = Number(data.wind.gust); setText(els.wind_gust, `${ms} m/s (${Math.round(ms * 3.6)} km/h)`);
+  } else setText(els.wind_gust, '-');
+
+  if (data?.wind?.deg != null) {
+    const deg = Number(data.wind.deg); setText(els.wind_dir, `${deg}° ${degreeToCardinal(deg)}`);
+  } else setText(els.wind_dir, '-');
+
+  setText(els.clouds, data?.clouds?.all != null ? `${data.clouds.all} %` : '-');
+  setText(els.humidity, data?.main?.humidity != null ? `${data.main.humidity} %` : '-');
+}
+
+async function fetchWeather(event) {
+  event.preventDefault();
+  const city = els.city.value.trim();
+  els.error.textContent = '';
+  if (!city) { els.error.textContent = 'Enter a city name.'; return; }
+  els.submit.disabled = true;
+  try {
+    const res = await fetch(`/weather/${encodeURIComponent(city)}`);
+    if (!res.ok) throw new Error('Failed to fetch weather');
+    const data = await res.json();
+    updateUI(data, city);
+    saveRecent(data?.name || city);
+  } catch (err) {
+    els.error.textContent = 'Could not load weather. Try again.';
+  } finally { els.submit.disabled = false; }
+}
+
+window.addEventListener('DOMContentLoaded', () => {
+  $('form').addEventListener('submit', fetchWeather);
+  initTheme(); renderRecents();
+  $('theme').addEventListener('click', toggleTheme);
+});
+
+
+
